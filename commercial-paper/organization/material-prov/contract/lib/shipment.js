@@ -144,7 +144,7 @@ class Shipment extends State {
      * @param {Buffer} data to form back into the object
      */
     static deserialize(data) {
-        return Shipment.deserializeClass(data, Shipment);
+        return State.deserializeClass(data, Shipment);
     }
 
     /**
