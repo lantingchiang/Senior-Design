@@ -4,7 +4,7 @@
 const State = require('../ledger-api/state.js');
 
 // Enumerate vaccine batch state values
-const vaccineState = {
+const batchState = {
     SHIPPED: 1,
     ARRIVED: 2,
     ISSUED: 3,
@@ -89,35 +89,35 @@ class VaccineBatch extends State {
     }
 
     setShipped() {
-        this.currentState = vaccineState.SHIPPED;
+        this.currentState = batchState.SHIPPED;
     }
 
     setArrived() {
-        this.currentState = vaccineState.ARRIVED;
+        this.currentState = batchState.ARRIVED;
     }
 
     setIssued() {
-        this.currentState = vaccineState.ISSUED;
+        this.currentState = batchState.ISSUED;
     }
 
     setWarehoused() {
-        this.currentState = vaccineState.WAREHOUSED;
+        this.currentState = batchState.WAREHOUSED;
     }
 
     isShipped() {
-        return this.currentState === vaccineState.SHIPPED;
+        return this.currentState === batchState.SHIPPED;
     }
 
     isArrived() {
-        return this.currentState === vaccineState.ARRIVED;
+        return this.currentState === batchState.ARRIVED;
     }
 
     isIssued() {
-        return this.currentState === vaccineState.ISSUED;
+        return this.currentState === batchState.ISSUED;
     }
 
     isWarehoused() {
-        return this.currentState === vaccineState.WAREHOUSED;
+        return this.currentState === batchState.WAREHOUSED;
     }
 
     setApprover(newApprover) {
