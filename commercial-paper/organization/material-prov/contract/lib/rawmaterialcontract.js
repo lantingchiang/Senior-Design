@@ -12,37 +12,35 @@ const { Contract, Context } = require('fabric-contract-api');
 // PaperNet specifc classes
 const RawMaterial = require('./rawmaterial.js');
 const RawMaterialList = require('./rawmateriallist.js');
-const QueryUtils = require('./queries.js');
+const RawMaterialQueryUtils = require('./rawmaterialquery.js');
 
 /**
- * A custom context provides easy access to list of all commercial papers
+ * A custom context provides easy access to list of all raw materials
  */
-class CommercialPaperContext extends Context {
-
+class RawMaterialContext extends Context {
     constructor() {
         super();
-        // All papers are held in a list of papers
-        this.paperList = new PaperList(this);
+        // All raw materials are held in a list of raw materials
+        // subsequent transactions operate on this list
+        this.materialList = new RawMaterialList(this);
     }
-
 }
 
 /**
- * Define commercial paper smart contract by extending Fabric Contract class
- *
+ * Define raw material smart contract by extending Fabric Contract class
  */
-class CommercialPaperContract extends Contract {
+class RawMaterialContract extends Contract {
 
     constructor() {
         // Unique namespace when multiple contracts per chaincode file
-        super('org.papernet.commercialpaper');
+        super('org.vaccine.rawmaterial');
     }
 
     /**
-     * Define a custom context for commercial paper
+     * Define a custom context for raw material
     */
     createContext() {
-        return new CommercialPaperContext();
+        return new RawMaterialContext();
     }
 
     /**
@@ -56,209 +54,111 @@ class CommercialPaperContract extends Contract {
     }
 
     /**
-     * Issue commercial paper
-     *
-     * @param {Context} ctx the transaction context
-     * @param {String} issuer commercial paper issuer
-     * @param {Integer} paperNumber paper number for this issuer
-     * @param {String} issueDateTime paper issue date
-     * @param {String} maturityDateTime paper maturity date
-     * @param {Integer} faceValue face value of paper
-    */
-    async issue(ctx, issuer, paperNumber, issueDateTime, maturityDateTime, faceValue) {
+     * Create raw material
+     * @param {*} ctx 
+     * @param {string} materialName name of raw material
+     * @param {string} batchNumber batch number of raw material
+     * @param {int} quantity quantity of raw material
+     * @param {string} manufacturer manufacturer of raw material
+     * @param {string} manufactureDate date of manufacture of raw material
+     * @return instance of created raw material
+     */
+    async createMaterial(ctx, materialName, batchNumber, quantity, manufacturer, manufactureDate) {
 
-        // create an instance of the paper
-        let paper = CommercialPaper.createInstance(issuer, paperNumber, issueDateTime, maturityDateTime, parseInt(faceValue));
+        // create an instance of the raw material
+        let material = RawMaterial.createInstance(materialName, batchNumber, quantity, manufacturer, manufactureDate);
 
-        // Smart contract, rather than paper, moves paper into ISSUED state
-        paper.setIssued();
-
-        // save the owner's MSP 
+        // save the creator's MSP 
         let mspid = ctx.clientIdentity.getMSPID();
-        paper.setOwnerMSP(mspid);
+        material.setOwnerMSP(mspid);
 
-        // Newly issued paper is owned by the issuer to begin with (recorded for reporting purposes)
-        paper.setOwner(issuer);
+        // Add the raw material to the list of all raw materials in the ledger world state
+        await ctx.materialList.addRawMaterial(material);
 
-        // Add the paper to the list of all similar commercial papers in the ledger world state
-        await ctx.paperList.addPaper(paper);
-
-        // Must return a serialized paper to caller of smart contract
-        return paper;
+        // Must return a raw material to caller of smart contract
+        return material;
     }
 
     /**
-     * Buy commercial paper
-     *
-      * @param {Context} ctx the transaction context
-      * @param {String} issuer commercial paper issuer
-      * @param {Integer} paperNumber paper number for this issuer
-      * @param {String} currentOwner current owner of paper
-      * @param {String} newOwner new owner of paper
-      * @param {Integer} price price paid for this paper // transaction input - not written to asset
-      * @param {String} purchaseDateTime time paper was purchased (i.e. traded)  // transaction input - not written to asset
+     * Buy raw material
+     * @param {*} ctx 
+     * @param {string} manufacturer part of primary key to retrieve raw material instance with
+     * @param {string} batchNumber part of primary key to retrieve raw material instance with
+     * @param {string} purchaser 
+     * @param {int} price 
+     * @param {string} purchaseDateTime 
+     * @returns 
      */
-    async buy(ctx, issuer, paperNumber, currentOwner, newOwner, price, purchaseDateTime) {
+    async purchaseMaterial(ctx, manufacturer, batchNumber, purchaser, price, purchaseDateTime) {
 
-        // Retrieve the current paper using key fields provided
-        let paperKey = CommercialPaper.makeKey([issuer, paperNumber]);
-        let paper = await ctx.paperList.getPaper(paperKey);
+        // Retrieve the target raw material using key fields provided
+        let primaryKey = RawMaterial.makeKey([manufacturer, batchNumber]);
+        let material = await ctx.materialList.getRawMaterial(primaryKey);
 
-        // Validate current owner
-        if (paper.getOwner() !== currentOwner) {
-            throw new Error('\nPaper ' + issuer + paperNumber + ' is not owned by ' + currentOwner);
+        // Validate raw material isn't already purchased
+        if (material.getPurchaser() != null) {
+            throw new Error('\nRaw material ' + material.getMaterialName() + ' with batch number '
+                + batchNumber + ' manufactured by ' + manufacturer + ' is already purchased');
         }
 
-        // First buy moves state from ISSUED to TRADING (when running )
-        if (paper.isIssued()) {
-            paper.setTrading();
-        }
+        // set purchaser, purchase date, price of raw material
+        material.setPurchaser(purchaser);
+        material.setPurchaseDate(purchaseDateTime);
+        material.setPrice(price);
 
-        // Check paper is not already REDEEMED
-        if (paper.isTrading()) {
-            paper.setOwner(newOwner);
-            // save the owner's MSP 
-            let mspid = ctx.clientIdentity.getMSPID();
-            paper.setOwnerMSP(mspid);
-        } else {
-            throw new Error('\nPaper ' + issuer + paperNumber + ' is not trading. Current state = ' + paper.getCurrentState());
-        }
+        // save the purchaser's MSP 
+        let mspid = ctx.clientIdentity.getMSPID();
+        material.setOwnerMSP(mspid);
 
-        // Update the paper
-        await ctx.paperList.updatePaper(paper);
-        return paper;
+        // Update the raw material
+        await ctx.materialList.updateRawMaterial(material);
+        return material;
     }
 
     /**
-      *  Buy request:  (2-phase confirmation: Commercial paper is 'PENDING' subject to completion of transfer by owning org)
-      *  Alternative to 'buy' transaction
-      *  Note: 'buy_request' puts paper in 'PENDING' state - subject to transfer confirmation [below].
-      * 
-      * @param {Context} ctx the transaction context
-      * @param {String} issuer commercial paper issuer
-      * @param {Integer} paperNumber paper number for this issuer
-      * @param {String} currentOwner current owner of paper
-      * @param {String} newOwner new owner of paper                              // transaction input - not written to asset per se - but written to block
-      * @param {Integer} price price paid for this paper                         // transaction input - not written to asset per se - but written to block
-      * @param {String} purchaseDateTime time paper was requested                // transaction input - ditto.
+     * Sets the dateMixedIn field of raw material; vaccine batch that it's mixed into is kept track of 
+     * on the vaccine batch side
+     * @param {*} ctx 
+     * @param {string} manufacturer part of primary key to retrieve raw material instance with
+     * @param {string} batchNumber part of primary key to retrieve raw material instance with
+     * @param {string} dateTimeAdded
+     * @returns 
      */
-    async buy_request(ctx, issuer, paperNumber, currentOwner, newOwner, price, purchaseDateTime) {
+    async addMaterial(ctx, manufacturer, batchNumber, dateTimeAdded) {
 
+        // Retrieve the target raw material using key fields provided
+        let primaryKey = RawMaterial.makeKey([manufacturer, batchNumber]);
+        let material = await ctx.materialList.getRawMaterial(primaryKey);
 
-        // Retrieve the current paper using key fields provided
-        let paperKey = CommercialPaper.makeKey([issuer, paperNumber]);
-        let paper = await ctx.paperList.getPaper(paperKey);
-
-        // Validate current owner - this is really information for the user trying the sample, rather than any 'authorisation' check per se FYI
-        if (paper.getOwner() !== currentOwner) {
-            throw new Error('\nPaper ' + issuer + paperNumber + ' is not owned by ' + currentOwner + ' provided as a paraneter');
+        // Validate raw material isn't already mixed in
+        if (material.getDateMixedIn() != null) {
+            throw new Error('\nRaw material ' + material.getMaterialName() + ' with batch number '
+                + batchNumber + ' manufactured by ' + manufacturer + ' is already used');
         }
-        // paper set to 'PENDING' - can only be transferred (confirmed) by identity from owning org (MSP check).
-        paper.setPending();
 
-        // Update the paper
-        await ctx.paperList.updatePaper(paper);
-        return paper;
+        // set dateMixedIn
+        material.setDateMixedIn(dateTimeAdded);
+
+        // Update the raw material
+        await ctx.materialList.updateRawMaterial(material);
+        return material;
     }
 
-    /**
-     * transfer commercial paper: only the owning org has authority to execute. It is the complement to the 'buy_request' transaction. '[]' is optional below.
-     * eg. issue -> buy_request -> transfer -> [buy ...n | [buy_request...n | transfer ...n] ] -> redeem
-     * this transaction 'pair' is an alternative to the straight issue -> buy -> [buy....n] -> redeem ...path
-     *
-     * @param {Context} ctx the transaction context
-     * @param {String} issuer commercial paper issuer
-     * @param {Integer} paperNumber paper number for this issuer
-     * @param {String} newOwner new owner of paper
-     * @param {String} newOwnerMSP  MSP id of the transferee
-     * @param {String} confirmDateTime  confirmed transfer date.
-    */
-    async transfer(ctx, issuer, paperNumber, newOwner, newOwnerMSP, confirmDateTime) {
-
-        // Retrieve the current paper using key fields provided
-        let paperKey = CommercialPaper.makeKey([issuer, paperNumber]);
-        let paper = await ctx.paperList.getPaper(paperKey);
-
-        // Validate current owner's MSP in the paper === invoking transferor's MSP id - can only transfer if you are the owning org.
-
-        if (paper.getOwnerMSP() !== ctx.clientIdentity.getMSPID()) {
-            throw new Error('\nPaper ' + issuer + paperNumber + ' is not owned by the current invoking Organisation, and not authorised to transfer');
-        }
-
-        // Paper needs to be 'pending' - which means you need to have run 'buy_pending' transaction first.
-        if (!paper.isPending()) {
-            throw new Error('\nPaper ' + issuer + paperNumber + ' is not currently in state: PENDING for transfer to occur: \n must run buy_request transaction first');
-        }
-        // else all good
-
-        paper.setOwner(newOwner);
-        // set the MSP of the transferee (so that, that org may also pass MSP check, if subsequently transferred/sold on)
-        paper.setOwnerMSP(newOwnerMSP);
-        paper.setTrading();
-        paper.confirmDateTime = confirmDateTime;
-
-        // Update the paper
-        await ctx.paperList.updatePaper(paper);
-        return paper;
-    }
-
-    /**
-     * Redeem commercial paper
-     *
-     * @param {Context} ctx the transaction context
-     * @param {String} issuer commercial paper issuer
-     * @param {Integer} paperNumber paper number for this issuer
-     * @param {String} redeemingOwner redeeming owner of paper
-     * @param {String} issuingOwnerMSP the MSP of the org that the paper will be redeemed with.
-     * @param {String} redeemDateTime time paper was redeemed
-    */
-    async redeem(ctx, issuer, paperNumber, redeemingOwner, issuingOwnerMSP, redeemDateTime) {
-
-        let paperKey = CommercialPaper.makeKey([issuer, paperNumber]);
-
-        let paper = await ctx.paperList.getPaper(paperKey);
-
-        // Check paper is not alread in a state of REDEEMED
-        if (paper.isRedeemed()) {
-            throw new Error('\nPaper ' + issuer + paperNumber + ' has already been redeemed');
-        }
-
-        // Validate current redeemer's MSP matches the invoking redeemer's MSP id - can only redeem if you are the owning org.
-
-        if (paper.getOwnerMSP() !== ctx.clientIdentity.getMSPID()) {
-            throw new Error('\nPaper ' + issuer + paperNumber + ' cannot be redeemed by ' + ctx.clientIdentity.getMSPID() + ', as it is not the authorised owning Organisation');
-        }
-
-        // As this is just a sample, can show additional verification check: that the redeemer provided matches that on record, before redeeming it
-        if (paper.getOwner() === redeemingOwner) {
-            paper.setOwner(paper.getIssuer());
-            paper.setOwnerMSP(issuingOwnerMSP);
-            paper.setRedeemed();
-            paper.redeemDateTime = redeemDateTime; // record redemption date against the asset (the complement to 'issue date')
-        } else {
-            throw new Error('\nRedeeming owner: ' + redeemingOwner + ' organisation does not currently own paper: ' + issuer + paperNumber);
-        }
-
-        await ctx.paperList.updatePaper(paper);
-        return paper;
-    }
+    
 
     // Query transactions
 
     /**
-     * Query history of a commercial paper
+     * Query history of a raw material
      * @param {Context} ctx the transaction context
-     * @param {String} issuer commercial paper issuer
-     * @param {Integer} paperNumber paper number for this issuer
+     * @param {String} manufacturer of raw material
+     * @param {String} batchNumber of raw material
     */
-    async queryHistory(ctx, issuer, paperNumber) {
-
-        // Get a key to be used for History query
-
-        let query = new QueryUtils(ctx, 'org.papernet.paper');
-        let results = await query.getAssetHistory(issuer, paperNumber); // (cpKey);
+    async queryHistory(ctx, batchNumber, manufacturer) {
+        let query = new RawMaterialQueryUtils(ctx, 'org.vaccine.rawmaterial');
+        // pass in primary key composed of batch number and manufacturer
+        let results = await query.getAssetHistory(batchNumber, manufacturer);
         return results;
-
     }
 
     /**
@@ -336,4 +236,4 @@ class CommercialPaperContract extends Contract {
 
 }
 
-module.exports = CommercialPaperContract;
+module.exports = RawMaterialContract;
