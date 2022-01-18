@@ -4,7 +4,7 @@
 // Utility class for ledger state
 const State = require('./../ledger-api/state.js');
 
-// Enumerate commercial paper state values
+// Enumerate shipment state values
 const shipmentState = {
     LEFTSOURCE: 1,
     ARRIVEDDEST: 2
