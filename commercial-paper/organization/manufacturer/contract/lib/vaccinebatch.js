@@ -21,15 +21,18 @@ class VaccineBatch extends State {
     /**
      * @param obj: JS set with the following object:
      *             vaccineName, batchNumber, quantity, manufacturer, manufactureDate, 
-     *             rawMaterialBatchSet (batchNumbers of all raw materials in vaccine batch)
+     *             rawMaterialBatchSet (batchNumbers of all raw materials in vaccine batch),
+     *             purchaser - initially the manufacturer (current owner of batch)
      */
     constructor(obj) {
         // primary key - batch number and manufacturer 
         super(VaccineBatch.getClass(), [obj.batchNumber, obj.manufacturer]);
         Object.assign(this, obj);
 
+        // inital owner is manufacturer
+        this.purchaser = obj.manufacturer; 
+
         // initialize unknowns to null
-        this.purchaser = null;
         this.purchaseDate = null;
         this.currentState = null;
         this.approver = null;
@@ -38,6 +41,8 @@ class VaccineBatch extends State {
         this.temperature = null;
         this.timestamp = null;
         this.entityAllocated = null;
+        this.ready = false; // whether vaccine is ready
+        this.rawMaterialBatchSet = new Set();
     }
 
     /**
@@ -161,6 +166,14 @@ class VaccineBatch extends State {
         return this.entityAllocated;
     }
 
+    addRawMaterial(material) {
+        this.rawMaterialBatchSet.add(material);
+    }
+
+    setReady() {
+        this.ready = True;
+    }
+
     // Included methods
     setOwnerMSP(mspid) {
         this.mspid = mspid;
@@ -189,8 +202,8 @@ class VaccineBatch extends State {
     /**
      * Factory method to create a commercial vaccine batch object
      */
-    static createInstance(vaccineName, batchNumber, quantity, manufacturer, manufactureDate, rawMaterialBatchSet) {
-        return new VaccineBatch({ vaccineName, batchNumber, quantity, manufacturer, manufactureDate, rawMaterialBatchSet});
+    static createInstance(vaccineName, batchNumber, quantity, manufacturer, manufactureDate) {
+        return new VaccineBatch({ vaccineName, batchNumber, quantity, manufacturer, manufactureDate});
     }
 
     static getClass() {
