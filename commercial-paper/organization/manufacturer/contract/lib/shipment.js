@@ -1,3 +1,8 @@
+/*
+ * Copyright IBM Corp. All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+*/
 
 'use strict';
 
@@ -24,9 +29,10 @@ class Shipment extends State {
         this.vehicleOperator = null;
         this.currentLocation = null;
         this.currentTemp = null;
-        this.tempTimestamp = null;
-        this.shipDate = null;
-        this.arrivalDate = null;
+        this.timestamp = null;
+        this.shipDateTime = null;
+        this.arrivalDateTime = null;
+        this.mspid = null; //creator's mspid
     }
 
     /**
@@ -80,28 +86,28 @@ class Shipment extends State {
         return this.currentTemp;
     }
 
-    setTempTimestamp(newTempTimestamp) {
-        this.tempTimestamp = newTempTimestamp;
+    setTimestamp(newTimestamp) {
+        this.timestamp = newTimestamp;
     }
 
-    getTempTimestamp() {
-        return this.tempTimestamp;
+    getTimestamp() {
+        return this.timestamp;
     }
 
-    setShipDate(newShipDate) {
-        this.shipDate = newShipDate;
+    setShipDateTime(newShipDateTime) {
+        this.shipDateTime = newShipDateTime;
     }
 
-    getShipDate() {
-        return this.shipDate;
+    getShipDateTime() {
+        return this.shipDateTime;
     }
 
-    setArrivalDate(newArrivalDate) {
-        this.arrivalDate = newArrivalDate;
+    setArrivalDateTime(newArrivalDateTime) {
+        this.arrivalDateTime = newArrivalDateTime;
     }
 
-    getArrivalDate() {
-        return this.arrivalDate;
+    getArrivalDateTime() {
+        return this.arrivalDateTime;
     }
 
     setOwnerMSP(mspid) {
