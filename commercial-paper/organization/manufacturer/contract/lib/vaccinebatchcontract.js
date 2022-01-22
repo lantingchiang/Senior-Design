@@ -5,18 +5,18 @@ const { Contract, Context } = require('fabric-contract-api');
 
 // PaperNet specifc classes
 const VaccineBatch = require('./vaccinebatch.js');
-const VaccineList = require('./vaccinelist.js');
+const VaccineBatchList = require('./vaccinebatchlist.js');
 //const QueryUtils = require('./queries.js');
 
 /**
  * A custom context provides easy access to list of all vaccine batches
  */
-class VaccineContext extends Context {
+class VaccineBatchContext extends Context {
 
     constructor() {
         super();
         // All vaccine batches are held in a list
-        this.vaccineBatchList = new VaccineList(this);
+        this.vaccineBatchList = new VaccineBatchList(this);
     }
 
 }
@@ -25,7 +25,7 @@ class VaccineContext extends Context {
  * Define commercial paper smart contract by extending Fabric Contract class
  *
  */
-class VaccineContract extends Contract {
+class VaccineBatchContract extends Contract {
 
     constructor() {
         // Unique namespace when multiple contracts per chaincode file
@@ -36,7 +36,7 @@ class VaccineContract extends Contract {
      * Define a custom context 
     */
     createContext() {
-        return new VaccineContext();
+        return new VaccineBatchContext();
     }
 
     /**
@@ -160,4 +160,4 @@ class VaccineContract extends Contract {
 
 }
 
-module.exports = VaccineContract;
+module.exports = VaccineBatchContract;

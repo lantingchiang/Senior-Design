@@ -5,7 +5,7 @@ const StateList = require('../ledger-api/statelist.js');
 
 const CommercialPaper = require('./vaccinebatch.js');
 
-class VaccineList extends StateList {
+class VaccineBatchList extends StateList {
 
     constructor(ctx) {
         super(ctx, 'org.vaccine.vaccineBatch');
