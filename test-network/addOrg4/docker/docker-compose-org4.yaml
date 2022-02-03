@@ -38,7 +38,7 @@ services:
       - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:13052 # changed from 11052 to 13052
       - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org4.example.com:13051 # changed from 11051 to 13051
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org4.example.com:13051 # changed from 11051 to 13051
-      - CORE_PEER_LOCALMSPID=org4MSP
+      - CORE_PEER_LOCALMSPID=Org4MSP
     volumes:
         - ${DOCKER_SOCK}:/host/var/run/docker.sock
         - ../../organizations/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/msp:/etc/hyperledger/fabric/msp
