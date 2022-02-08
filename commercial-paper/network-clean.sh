@@ -18,7 +18,7 @@ export FABRIC_CFG_PATH="${DIR}/../config"
 
 cd "${DIR}/../test-network/"
 
-docker kill cliDigiBank cliMagnetoCorp logspout || true
+docker kill cliMaterialProvider cliDigiBank cliMagnetoCorp logspout || true
 ./network.sh down
 
 # remove any stopped containers
