@@ -25,7 +25,10 @@ class RawMaterial extends State {
      */
     constructor(obj) {
         // batchNumber and manufacturer together make the primary key of RawMaterial
-        super(RawMaterial.getClass(), [obj.batchNumber, obj.manufacturer]);
+        // NOTE: put manufacturer in front of batch number because fabric allows queries
+        // by prefix of composite key, so if we want to query all raw materials by same manufacturer
+        // we need the composite key in this order!
+        super(RawMaterial.getClass(), [obj.manufacturer, obj.batchNumber]);
         Object.assign(this, obj);
         this.purchaser = null;
         this.purchaseDate = null;

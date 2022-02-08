@@ -8,6 +8,7 @@
 
 // Fabric smart contract classes
 const { Contract, Context } = require('fabric-contract-api');
+const QueryUtils = require('../../../digibank/contract/lib/queries.js');
 
 // PaperNet specifc classes
 const RawMaterial = require('./rawmaterial.js');
@@ -50,7 +51,7 @@ class RawMaterialContract extends Contract {
     async instantiate(ctx) {
         // No implementation required with this example
         // It could be where data migration is performed, if necessary
-        console.log('Instantiate the contract');
+        console.log('Instantiate the contract for raw materials');
     }
 
     /**
@@ -145,94 +146,113 @@ class RawMaterialContract extends Contract {
     }
 
     
+    // ==========================================================
+    // =================== Query transactions ===================
+    // ==========================================================
 
-    // Query transactions
+    /**
+     * Query history of a raw material
+     * @param {Context} ctx the transaction context
+     * @param {String} manufacturer of raw material
+     * @param {String} batchNumber of raw material
+    */
+    async queryHistory(ctx, batchNumber, manufacturer) {
+        let query = new RawMaterialQueryUtils(ctx, 'org.vaccine.rawmaterial');
+        // pass in primary key composed of batch number and manufacturer
+        let results = await query.getAssetHistory(batchNumber, manufacturer);
+        return results;
+    }
 
-    // /**
-    //  * Query history of a raw material
-    //  * @param {Context} ctx the transaction context
-    //  * @param {String} manufacturer of raw material
-    //  * @param {String} batchNumber of raw material
-    // */
-    // async queryHistory(ctx, batchNumber, manufacturer) {
-    //     let query = new RawMaterialQueryUtils(ctx, 'org.vaccine.rawmaterial');
-    //     // pass in primary key composed of batch number and manufacturer
-    //     let results = await query.getAssetHistory(batchNumber, manufacturer);
-    //     return results;
-    // }
+    /**
+     * queryName: supply name of raw material to find list of raw materials with given name
+     * @param {Context} ctx 
+     * @param {String} name name of raw material
+     */
+    async queryName(ctx, name) {
+        let query = new RawMaterialQueryUtils(ctx, 'org.vaccine.rawmaterial');
+        let results = await query.queryByName(name);
+        console.log("------ Result returned by query name -----\n", results,
+            "-------------------------------\n");
 
-    // /**
-    // * queryPurchaser raw material: supply name of purchaser to find list of raw materials this purchaser purchased
-    // * @param {Context} ctx the transaction context
-    // * @param {String} owner commercial paper owner
-    // */
-    // async queryPurchaser(ctx, owner) {
+        return results;
+    }
 
-    //     let query = new QueryUtils(ctx, 'org.papernet.paper');
-    //     let owner_results = await query.queryKeyByOwner(owner);
+    /**
+    * queryPurchaser: supply purchaser of raw materialto find list of 
+    * raw materials this purchaser purchased
+    * @param {Context} ctx the transaction context
+    * @param {String} purchaser raw material purchaser
+    */
+    async queryPurchaser(ctx, owner) {
 
-    //     return owner_results;
-    // }
+        let query = new RawMaterialQueryUtils(ctx, 'org.vaccine.rawmaterial');
+        let results = await query.queryByPurchaser(owner);
+        console.log("------ Result returned by query purchaser -----\n", results,
+            "-------------------------------\n");
 
-    // /**
-    // * queryPartial commercial paper - provide a prefix eg. "DigiBank" will list all papers _issued_ by DigiBank etc etc
-    // * @param {Context} ctx the transaction context
-    // * @param {String} prefix asset class prefix (added to paperlist namespace) eg. org.papernet.paperMagnetoCorp asset listing: papers issued by MagnetoCorp.
-    // */
-    // async queryPartial(ctx, prefix) {
+        return results;
+    }
 
-    //     let query = new QueryUtils(ctx, 'org.papernet.paper');
-    //     let partial_results = await query.queryKeyByPartial(prefix);
+    async queryDateMixedIn(ctx, dateMixedIn) {
+        let query = new RawMaterialQueryUtils(ctx, 'org.vaccine.rawmaterial');
+        let results = await query.queryByDateMixedIn(dateMixedIn);
+        console.log("------ Result returned by query date mixed in -----\n", results,
+            "-------------------------------\n");
 
-    //     return partial_results;
-    // }
+        return results;
+    }
 
-    // /**
-    // * queryAdHoc commercial paper - supply a custom mango query
-    // * eg - as supplied as a param:     
-    // * ex1:  ["{\"selector\":{\"faceValue\":{\"$lt\":8000000}}}"]
-    // * ex2:  ["{\"selector\":{\"faceValue\":{\"$gt\":4999999}}}"]
-    // * 
-    // * @param {Context} ctx the transaction context
-    // * @param {String} queryString querystring
-    // */
-    // async queryAdhoc(ctx, queryString) {
+    async queryBatchNumber(ctx, batchNumber) {
+        let query = new RawMaterialQueryUtils(ctx, 'org.vaccine.rawmaterial');
+        let results = await query.queryByBatchNumber(batchNumber);
+        console.log("------ Result returned by query batch number -----\n", results,
+            "-------------------------------\n");
 
-    //     let query = new QueryUtils(ctx, 'org.papernet.paper');
-    //     let querySelector = JSON.parse(queryString);
-    //     let adhoc_results = await query.queryByAdhoc(querySelector);
+        return results;
+    }
 
-    //     return adhoc_results;
-    // }
+    async queryManufacturer(ctx, manufacturer) {
+        let query = new RawMaterialQueryUtils(ctx, 'org.vaccine.rawmaterial');
+        let results = await query.queryByManufacturer(manufacturer);
+        console.log("------ Result returned by query manufacturer -----\n", results,
+            "-------------------------------\n");
+
+        return results;
+    }
 
 
-    // /**
-    //  * queryNamed - supply named query - 'case' statement chooses selector to build (pre-canned for demo purposes)
-    //  * @param {Context} ctx the transaction context
-    //  * @param {String} queryname the 'named' query (built here) - or - the adHoc query string, provided as a parameter
-    //  */
-    // async queryNamed(ctx, queryname) {
-    //     let querySelector = {};
-    //     switch (queryname) {
-    //         case "redeemed":
-    //             querySelector = { "selector": { "currentState": 4 } };  // 4 = redeemd state
-    //             break;
-    //         case "trading":
-    //             querySelector = { "selector": { "currentState": 3 } };  // 3 = trading state
-    //             break;
-    //         case "value":
-    //             // may change to provide as a param - fixed value for now in this sample
-    //             querySelector = { "selector": { "faceValue": { "$gt": 4000000 } } };  // to test, issue CommPapers with faceValue <= or => this figure.
-    //             break;
-    //         default: // else, unknown named query
-    //             throw new Error('invalid named query supplied: ' + queryname + '- please try again ');
-    //     }
+    /**
+    * queryPartial: retrieves composite keys given a prefix of the key, e.g. given manufacturer name
+    * @param {Context} ctx the transaction context
+    * @param {String} prefix manufacturer name
+    */
+    async queryPartial(ctx, prefix) {
 
-    //     let query = new QueryUtils(ctx, 'org.papernet.paper');
-    //     let adhoc_results = await query.queryByAdhoc(querySelector);
+        let query = new QueryUtils(ctx, 'org.vaccine.rawmaterial');
+        let partial_results = await query.queryKeyByPartial(prefix);
+        console.log("------ Result returned by query partial -----\n", results,
+            "-------------------------------\n");
 
-    //     return adhoc_results;
-    // }
+        return partial_results;
+    }
+
+    /**
+    * queryAdHoc raw material - supply a custom query for couch db
+    * eg - as supplied as a param:     
+    * ex1:  ["{\"selector\":{\"faceValue\":{\"$lt\":8000000}}}"]
+    * ex2:  ["{\"selector\":{\"faceValue\":{\"$gt\":4999999}}}"]
+    * 
+    * @param {Context} ctx the transaction context
+    * @param {String} queryString querystring
+    */
+    async queryAdhoc(ctx, queryString) {
+
+        let query = new QueryUtils(ctx, 'org.vaccine.rawmaterial');
+        let querySelector = JSON.parse(queryString);
+        let adhoc_results = await query.queryByAdhoc(querySelector);
+
+        return adhoc_results;
+    }
 
 }
 
