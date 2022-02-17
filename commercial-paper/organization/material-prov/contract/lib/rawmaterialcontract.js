@@ -65,6 +65,14 @@ class RawMaterialContract extends Contract {
      * @return instance of created raw material
      */
     async createMaterial(ctx, materialName, batchNumber, quantity, manufacturer, manufactureDate) {
+        // Retrieve the target raw material using key fields provided
+        let primaryKey = RawMaterial.makeKey([manufacturer, batchNumber]);
+        let material = await ctx.materialList.getRawMaterial(primaryKey);
+
+        // check if raw material exists
+        if (material && material.length > 0) {
+            throw new Error(`Raw material ${batchNumber} from ${manufacturer} already exists`);
+        }
 
         // create an instance of the raw material
         let material = RawMaterial.createInstance(materialName, batchNumber, quantity, manufacturer, manufactureDate);
@@ -95,6 +103,11 @@ class RawMaterialContract extends Contract {
         // Retrieve the target raw material using key fields provided
         let primaryKey = RawMaterial.makeKey([manufacturer, batchNumber]);
         let material = await ctx.materialList.getRawMaterial(primaryKey);
+
+        // check if raw material exists
+        if (!material || material.length == 0) {
+            throw new Error(`Raw material ${batchNumber} from ${manufacturer} doesn't exist`);
+        }
 
         // Validate raw material isn't already purchased
         if (material.getPurchaser() != null) {
