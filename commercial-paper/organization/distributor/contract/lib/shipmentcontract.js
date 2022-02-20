@@ -52,7 +52,7 @@ class ShipmentContract extends Contract {
     async instantiate(ctx) {
         // No implementation required with this example
         // It could be where data migration is performed, if necessary
-        console.log('Instantiate the contract');
+        console.log('Instantiate the contract for shipment');
     }
 
     /**
@@ -179,94 +179,122 @@ class ShipmentContract extends Contract {
         return shipment;
     }
 
-    // // Query transactions
+    // Query transactions
 
-    // /**
-    //  * Query history of a shipment
-    //  * @param {Context} ctx the transaction context
-    //  * @param {Integer} shipmentUUID shipment unique identifier
-    // */
-    // async queryHistory(ctx, shipmentUUID) {
+    /**
+     * Query history of a shipment
+     * @param {Context} ctx the transaction context
+     * @param {Integer} shipmentUUID shipment unique identifier
+    */
+    async queryHistory(ctx, shipmentUUID) {
+        // Get a key to be used for History query
+        let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
+        let results = await query.getAssetHistory(shipmentUUID);
+        return results;
 
-    //     // Get a key to be used for History query
-    //     let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
-    //     let results = await query.getAssetHistory(shipmentUUID);
-    //     return results;
+    }
 
-    // }
+    /**
+    * @param {Context} ctx the transaction context
+    * @param {String} shipmentProvider shipment provider
+    */
+    async queryShipmentProvider(ctx, shipmentProvider) {
 
-    // /**
-    // * queryOwner commercial paper: supply name of owning org, to find list of papers based on owner field
-    // * @param {Context} ctx the transaction context
-    // * @param {String} owner commercial paper owner
-    // */
-    // async queryOwner(ctx, owner) {
+        let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
+        let results = await query.queryByShipmentProvider(shipmentProvider);
 
-    //     let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
-    //     let owner_results = await query.queryKeyByOwner(owner);
+        return results;
+    }
 
-    //     return owner_results;
-    // }
+    /**
+    * @param {Context} ctx the transaction context
+    * @param {String} source shipment source
+    */
+     async queryShipmentSource(ctx, source) {
 
-    // /**
-    // * queryPartial commercial paper - provide a prefix eg. "DigiBank" will list all papers _issued_ by DigiBank etc etc
-    // * @param {Context} ctx the transaction context
-    // * @param {String} prefix asset class prefix (added to paperlist namespace) eg. org.papernet.paperMagnetoCorp asset listing: papers issued by MagnetoCorp.
-    // */
-    // async queryPartial(ctx, prefix) {
+        let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
+        let results = await query.queryByShipmentSource(source);
 
-    //     let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
-    //     let partial_results = await query.queryKeyByPartial(prefix);
+        return results;
+    }
 
-    //     return partial_results;
-    // }
+    /**
+    * @param {Context} ctx the transaction context
+    * @param {String} destination shipment dest
+    */
+     async queryShipmentDestination(ctx, destination) {
 
-    // /**
-    // * queryAdHoc commercial paper - supply a custom mango query
-    // * eg - as supplied as a param:     
-    // * ex1:  ["{\"selector\":{\"faceValue\":{\"$lt\":8000000}}}"]
-    // * ex2:  ["{\"selector\":{\"faceValue\":{\"$gt\":4999999}}}"]
-    // * 
-    // * @param {Context} ctx the transaction context
-    // * @param {String} queryString querystring
-    // */
-    // async queryAdhoc(ctx, queryString) {
+        let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
+        let results = await query.queryByShipmentDestination(destination);
 
-    //     let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
-    //     let querySelector = JSON.parse(queryString);
-    //     let adhoc_results = await query.queryByAdhoc(querySelector);
+        return results;
+    }
 
-    //     return adhoc_results;
-    // }
+    /**
+    * @param {Context} ctx the transaction context
+    * @param {String} shipmentUUID shipmentUUID
+    */
+     async queryShipmentUUID(ctx, shipmentUUID) {
 
+        let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
+        let results = await query.queryByShipmentUUID(shipmentUUID);
 
-    // /**
-    //  * queryNamed - supply named query - 'case' statement chooses selector to build (pre-canned for demo purposes)
-    //  * @param {Context} ctx the transaction context
-    //  * @param {String} queryname the 'named' query (built here) - or - the adHoc query string, provided as a parameter
-    //  */
-    // async queryNamed(ctx, queryname) {
-    //     let querySelector = {};
-    //     switch (queryname) {
-    //         case "redeemed":
-    //             querySelector = { "selector": { "currentState": 4 } };  // 4 = redeemd state
-    //             break;
-    //         case "trading":
-    //             querySelector = { "selector": { "currentState": 3 } };  // 3 = trading state
-    //             break;
-    //         case "value":
-    //             // may change to provide as a param - fixed value for now in this sample
-    //             querySelector = { "selector": { "faceValue": { "$gt": 4000000 } } };  // to test, issue CommPapers with faceValue <= or => this figure.
-    //             break;
-    //         default: // else, unknown named query
-    //             throw new Error('invalid named query supplied: ' + queryname + '- please try again ');
-    //     }
+        return results;
+    }
 
-    //     let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
-    //     let adhoc_results = await query.queryByAdhoc(querySelector);
+     /**
+    * @param {Context} ctx the transaction context
+    * @param {String} shipDateTime shipDateTime
+    */
+      async queryShipDateTime(ctx, shipDateTime) {
 
-    //     return adhoc_results;
-    // }
+        let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
+        let results = await query.queryByShipDateTime(shipDateTime);
+
+        return results;
+    }
+
+     /**
+    * @param {Context} ctx the transaction context
+    * @param {String} arrivalDateTime arrivalDateTime
+    */
+      async queryArrivalDateTime(ctx, arrivalDateTime) {
+
+        let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
+        let results = await query.queryByArrivalDateTime(arrivalDateTime);
+
+        return results;
+    }
+
+    /**
+    * queryPartial shipment - provide a prefix for a shipmentUUID
+    * @param {Context} ctx the transaction context
+    * @param {String} prefix asset class prefix    */
+    async queryPartial(ctx, prefix) {
+
+        let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
+        let partial_results = await query.queryKeyByPartial(prefix);
+
+        return partial_results;
+    }
+
+    /**
+    * queryAdHoc shipment - supply a custom couchdb query
+    * eg - as supplied as a param:     
+    * ex1:  ["{\"selector\":{\"faceValue\":{\"$lt\":8000000}}}"]
+    * ex2:  ["{\"selector\":{\"faceValue\":{\"$gt\":4999999}}}"]
+    * 
+    * @param {Context} ctx the transaction context
+    * @param {String} queryString querystring
+    */
+    async queryAdhoc(ctx, queryString) {
+
+        let query = new ShipmentQueryUtils(ctx, 'org.vaccine.shipment');
+        let querySelector = JSON.parse(queryString);
+        let adhoc_results = await query.queryByAdhoc(querySelector);
+
+        return adhoc_results;
+    }
 
 }
 
