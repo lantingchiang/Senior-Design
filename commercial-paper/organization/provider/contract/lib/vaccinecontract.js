@@ -2,11 +2,12 @@
 
 // Fabric smart contract classes
 const { Contract, Context } = require('fabric-contract-api');
+//const QueryUtils = require('../../../digibank/contract/lib/queries.js');
 
 // PaperNet specifc classes
 const Vaccine = require('./vaccine.js');
 const VaccineList = require('./vaccinelist.js');
-//const QueryUtils = require('./queries.js');
+const VaccineQueryUtils = require('./vaccinequery.js');
 
 /**
  * A custom context provides easy access to list of all individual vaccines
@@ -46,7 +47,7 @@ class VaccineContract extends Contract {
     async instantiate(ctx) {
         // No implementation required with this example
         // It could be where data migration is performed, if necessary
-        console.log('Instantiate the contract');
+        console.log('Instantiate the contract for vaccines');
     }
 
     /**
@@ -89,7 +90,112 @@ class VaccineContract extends Contract {
         return currVaccine;
     }
 
-    // TODO: add queries
+     /**
+     * Query history of a vaccine
+     * @param {Context} ctx the transaction context
+     * @param {String} vaccineUUID unique id of a vaccine dose
+    */
+      async queryHistory(ctx, vaccineUUID) {
+        let query = new VaccineQueryUtils(ctx, 'org.vaccine.vaccine');
+        // pass in primary key composed of vaccineUUID
+        let results = await query.getAssetHistory(vaccineUUID);
+        return results;
+    }
+
+    /**
+    * queryPurchaser: supply purchaser of vaccine to find list of 
+    * vaccines this purchaser purchased
+    * @param {Context} ctx the transaction context
+    * @param {String} purchaser vaccine purchaser
+    */
+    async queryPurchaser(ctx, owner) {
+
+        let query = new VaccineQueryUtils(ctx, 'org.vaccine.vaccine');
+        let results = await query.queryByPurchaser(owner);
+        console.log("------ Result returned by query purchaser -----\n", results,
+            "-------------------------------\n");
+
+        return results;
+    }
+
+    async queryIssueDateTime(ctx, issueDateTime) {
+        let query = new VaccineQueryUtils(ctx, 'org.vaccine.vaccine');
+        let results = await query.queryByIssueDateTime(issueDateTime);
+        console.log("------ Result returned by query issue date time -----\n", results,
+            "-------------------------------\n");
+
+        return results;
+    }
+
+    async queryBatchNumber(ctx, batchNumber) {
+        let query = new RawMaterialQueryUtils(ctx, 'org.vaccine.vaccine');
+        let results = await query.queryByBatchNumber(batchNumber);
+        console.log("------ Result returned by query batch number -----\n", results,
+            "-------------------------------\n");
+
+        return results;
+    }
+
+    async queryManufacturer(ctx, manufacturer) {
+        let query = new VaccineQueryUtils(ctx, 'org.vaccine.vaccine');
+        let results = await query.queryByManufacturer(manufacturer);
+        console.log("------ Result returned by query manufacturer -----\n", results,
+            "-------------------------------\n");
+
+        return results;
+    }
+
+    async queryVaccineUUID(ctx, vaccineUUID) {
+        let query = new VaccineQueryUtils(ctx, 'org.vaccine.vaccine');
+        let results = await query.queryByVaccineUUID(vaccineUUID);
+        console.log("------ Result returned by query vaccine uuid -----\n", results,
+            "-------------------------------\n");
+
+        return results;
+    }
+
+    async queryRecipient(ctx, recipient) {
+        let query = new VaccineQueryUtils(ctx, 'org.vaccine.vaccine');
+        let results = await query.queryByRecipient(recipient);
+        console.log("------ Result returned by query recipient -----\n", results,
+            "-------------------------------\n");
+
+        return results;
+    }
+
+
+    /**
+    * queryPartial: retrieves composite keys given a prefix of the key, e.g. given manufacturer name
+    * @param {Context} ctx the transaction context
+    * @param {String} prefix manufacturer name
+    */
+    async queryPartial(ctx, prefix) {
+
+        let query = new QueryUtils(ctx, 'org.vaccine.rawmaterial');
+        let partial_results = await query.queryKeyByPartial(prefix);
+        console.log("------ Result returned by query partial -----\n", results,
+            "-------------------------------\n");
+
+        return partial_results;
+    }
+
+    /**
+    * queryAdHoc vaccine - supply a custom query for couch db
+    * eg - as supplied as a param:     
+    * ex1:  ["{\"selector\":{\"faceValue\":{\"$lt\":8000000}}}"]
+    * ex2:  ["{\"selector\":{\"faceValue\":{\"$gt\":4999999}}}"]
+    * 
+    * @param {Context} ctx the transaction context
+    * @param {String} queryString querystring
+    */
+    async queryAdhoc(ctx, queryString) {
+
+        let query = new QueryUtils(ctx, 'org.vaccine.vaccine');
+        let querySelector = JSON.parse(queryString);
+        let adhoc_results = await query.queryByAdhoc(querySelector);
+
+        return adhoc_results;
+    }
 
 }
 
