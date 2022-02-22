@@ -49,9 +49,9 @@ class ShipmentQueryUtils {
     // ===========================================================================================
     /**
     * queryOwner commercial paper
-    * @param {String} assetspace the asset space (eg MagnetoCorp's assets)
+    * @param {String} shipmentUUID 
     */
-    async queryKeyByPartial(assetspace) {
+    async queryKeyByPartial(shipmentUUID) {
 
         if (arguments.length < 1) {
             throw new Error('Incorrect number of arguments. Expecting 1');
@@ -59,7 +59,7 @@ class ShipmentQueryUtils {
         // ie namespace + prefix to assets etc eg 
         // "Key":"org.papernet.paperMagnetoCorp0001"   (0002, etc)
         // "Partial":'org.papernet.paperlistMagnetoCorp"'  (using partial key, find keys "0001", "0002" etc)
-        const resultsIterator = await this.ctx.stub.getStateByPartialCompositeKey(this.name, [assetspace]);
+        const resultsIterator = await this.ctx.stub.getStateByPartialCompositeKey(this.name, [shipmentUUID]);
         let method = this.getAllResults;
         let results = await method(resultsIterator, false);
 
@@ -73,21 +73,102 @@ class ShipmentQueryUtils {
     // Only available on state databases that support rich query (e.g. CouchDB)
     // =========================================================================================
     /**
-    * queryKeyByOwner shipment
-    * @param {String} owner shipment
-    * TODO: is there even an owner for a shipment? Not sure I understand this
+    * @param {String} shipmentProvider shipment provider
     */
-    async queryKeyByOwner(owner) {
+    async queryByShipmentProvider(shipmentProvider) {
         //  
         let self = this;
         if (arguments.length < 1) {
-            throw new Error('Incorrect number of arguments. Expecting owner name.');
+            throw new Error('Incorrect number of arguments. Expecting provider name.');
         }
         let queryString = {};
         queryString.selector = {};
-        //  queryString.selector.docType = 'indexOwnerDoc';
-        queryString.selector.owner = owner;
-        // set to (eg)  '{selector:{owner:MagnetoCorp}}'
+        queryString.selector.shipmentProvider = shipmentProvider;
+        let method = self.getQueryResultForQueryString;
+        let queryResults = await method(this.ctx, self, JSON.stringify(queryString));
+        return queryResults;
+    }
+
+    /**
+    * @param {String} source shipment source
+    */
+     async queryByShipmentSource(source) {
+        //  
+        let self = this;
+        if (arguments.length < 1) {
+            throw new Error('Incorrect number of arguments. Expecting source name.');
+        }
+        let queryString = {};
+        queryString.selector = {};
+        queryString.selector.source = source;
+        let method = self.getQueryResultForQueryString;
+        let queryResults = await method(this.ctx, self, JSON.stringify(queryString));
+        return queryResults;
+    }
+
+    /**
+    * @param {String} destination shipment destination
+    */
+     async queryByShipmentDestination(destination) {
+        //  
+        let self = this;
+        if (arguments.length < 1) {
+            throw new Error('Incorrect number of arguments. Expecting destination name.');
+        }
+        let queryString = {};
+        queryString.selector = {};
+        queryString.selector.destination = destination;
+        let method = self.getQueryResultForQueryString;
+        let queryResults = await method(this.ctx, self, JSON.stringify(queryString));
+        return queryResults;
+    }
+
+    /**
+    * @param {String} shipmentUUID shipmentUUID
+    */
+     async queryByShipmentUUID(shipmentUUID) {
+        //  
+        let self = this;
+        if (arguments.length < 1) {
+            throw new Error('Incorrect number of arguments. Expecting shipmentUUID.');
+        }
+        let queryString = {};
+        queryString.selector = {};
+        queryString.selector.shipmentUUID = shipmentUUID;
+        let method = self.getQueryResultForQueryString;
+        let queryResults = await method(this.ctx, self, JSON.stringify(queryString));
+        return queryResults;
+    }
+
+    /**
+    * @param {String} shipDateTime shipDateTime
+    */
+     async queryByShipDateTime(shipDateTime) {
+        //  
+        let self = this;
+        if (arguments.length < 1) {
+            throw new Error('Incorrect number of arguments. Expecting shipDateTime.');
+        }
+        let queryString = {};
+        queryString.selector = {};
+        queryString.selector.shipDateTime = shipDateTime;
+        let method = self.getQueryResultForQueryString;
+        let queryResults = await method(this.ctx, self, JSON.stringify(queryString));
+        return queryResults;
+    }
+
+    /**
+    * @param {String} arrivalDateTime arrivalDateTime
+    */
+     async queryByArrivalDateTime(arrivalDateTime) {
+        //  
+        let self = this;
+        if (arguments.length < 1) {
+            throw new Error('Incorrect number of arguments. Expecting arrivalDateTime.');
+        }
+        let queryString = {};
+        queryString.selector = {};
+        queryString.selector.arrivalDateTime = arrivalDateTime;
         let method = self.getQueryResultForQueryString;
         let queryResults = await method(this.ctx, self, JSON.stringify(queryString));
         return queryResults;
@@ -168,24 +249,6 @@ class ShipmentQueryUtils {
                     } else {
                         try {
                             jsonRes.Value = JSON.parse(res.value.value.toString('utf8'));
-                            // report the commercial paper states during the asset lifecycle, just for asset history reporting
-                            switch (jsonRes.Value.currentState) {
-                                case 1:
-                                    jsonRes.Value.currentState = 'ISSUED';
-                                    break;
-                                case 2:
-                                    jsonRes.Value.currentState = 'PENDING';
-                                    break;
-                                case 3:
-                                    jsonRes.Value.currentState = 'TRADING';
-                                    break;
-                                case 4:
-                                    jsonRes.Value.currentState = 'REDEEMED';
-                                    break;
-                                default: // else, unknown named query
-                                    jsonRes.Value.currentState = 'UNKNOWN';
-                            }
-
                         } catch (err) {
                             console.log(err);
                             jsonRes.Value = res.value.value.toString('utf8');

@@ -6,7 +6,7 @@ const { Contract, Context } = require('fabric-contract-api');
 // PaperNet specifc classes
 const VaccineBatch = require('./vaccinebatch.js');
 const VaccineBatchList = require('./vaccinebatchlist.js');
-//const QueryUtils = require('./queries.js');
+const VaccineBatchQueryUtils = require('./vaccinebatchquery.js');
 
 /**
  * A custom context provides easy access to list of all vaccine batches
@@ -156,7 +156,79 @@ class VaccineBatchContract extends Contract {
          return currVaccineBatch;
     }
 
-    // TODO: add queries
+    // Queries
+    /**
+     * Query history of a vaccine batch
+     * @param {Context} ctx the transaction context
+     * @param {String} vaccinebatchUUID unique id of a vaccine batch
+    */
+     async queryHistory(ctx, batchNumber, manufacturer) {
+        let query = new VaccineBatchQueryUtils(ctx, 'org.vaccine.vaccineBatch');
+        // pass in primary key composed of vaccineUUID
+        let results = await query.getAssetHistory(batchNumber, manufacturer);
+        return results;
+    }
+
+    async queryIssueDateTime(ctx, issueDateTime) {
+        let query = new VaccineBatchQueryUtils(ctx, 'org.vaccine.vaccineBatch');
+        let results = await query.queryByIssueDateTime(issueDateTime);
+        console.log("------ Result returned by query issue date time -----\n", results,
+            "-------------------------------\n");
+
+        return results;
+    }
+
+    async queryBatchNumber(ctx, batchNumber) {
+        let query = new RawMaterialQueryUtils(ctx, 'org.vaccine.vaccineBatch');
+        let results = await query.queryByBatchNumber(batchNumber);
+        console.log("------ Result returned by query batch number -----\n", results,
+            "-------------------------------\n");
+
+        return results;
+    }
+
+    async queryManufacturer(ctx, manufacturer) {
+        let query = new VaccineBatchQueryUtils(ctx, 'org.vaccine.vaccineBatch');
+        let results = await query.queryByManufacturer(manufacturer);
+        console.log("------ Result returned by query manufacturer -----\n", results,
+            "-------------------------------\n");
+
+        return results;
+    }
+
+
+    /**
+    * queryPartial: retrieves composite keys given a prefix of the key, e.g. given manufacturer name
+    * @param {Context} ctx the transaction context
+    * @param {String} prefix manufacturer name
+    */
+    async queryPartial(ctx, prefix) {
+
+        let query = new QueryUtils(ctx, 'org.vaccine.vaccineBatch');
+        let partial_results = await query.queryKeyByPartial(prefix);
+        console.log("------ Result returned by query partial -----\n", results,
+            "-------------------------------\n");
+
+        return partial_results;
+    }
+
+    /**
+    * queryAdHoc vaccine - supply a custom query for couch db
+    * eg - as supplied as a param:     
+    * ex1:  ["{\"selector\":{\"faceValue\":{\"$lt\":8000000}}}"]
+    * ex2:  ["{\"selector\":{\"faceValue\":{\"$gt\":4999999}}}"]
+    * 
+    * @param {Context} ctx the transaction context
+    * @param {String} queryString querystring
+    */
+    async queryAdhoc(ctx, queryString) {
+
+        let query = new QueryUtils(ctx, 'org.vaccine.vaccineBatch');
+        let querySelector = JSON.parse(queryString);
+        let adhoc_results = await query.queryByAdhoc(querySelector);
+
+        return adhoc_results;
+    }
 
 }
 
