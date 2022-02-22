@@ -25,7 +25,7 @@ class VaccineBatchQueryUtils {
     // =========================================================================================
     /**
     * Get Asset History for a vaccine
-    * @param {String} vaccineUUID the unique id of a vaccine dose
+    * @param {String} batchNumber the unique id of a vaccine dose
     */
     async getAssetHistory(batchNumber, manufacturer) {
         let ledgerKey = await this.ctx.stub.createCompositeKey(this.name, [batchNumber, manufacturer]);
